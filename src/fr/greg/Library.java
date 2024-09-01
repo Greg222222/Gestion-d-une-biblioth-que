@@ -8,10 +8,14 @@ public class Library {
     public Library() {
         this.books = new ArrayList<>();
     }
+    // Méthode pour ajouter un livre
     public void addBook(Book book) {
         books.add(book);
     }
-
+    // Méthode pour supprimer un livre
+    public void deleteBook(Book book) {
+        books.remove(book);
+    }
     // Méthode pour afficher tous les livres dans la bibliothèque
     public void displayBooks() {
         if (books.isEmpty()) {
@@ -24,6 +28,9 @@ public class Library {
             }
         }
     }
+
+
+
     // Méthode pour obtenir le nombre total de livres
     public int getNumberOfBooks() {
         return books.size();
