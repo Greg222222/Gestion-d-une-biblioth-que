@@ -5,6 +5,14 @@ import java.util.regex.Pattern;
 
 public class Main {
 
+    public static class StringUtils {
+        public static String removeAccents(String text) {
+            String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+            Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+            return pattern.matcher(normalized).replaceAll("");
+        }
+    }
+
     public static void menu(Scanner s, Library library) {
 
         int choice = 0;
@@ -65,6 +73,7 @@ public class Main {
                         break;
                     case 5:
                         // Logique de retour d'un livre (à implémenter)
+                        returnBook(s, library);
                         break;
                     case 6:
                         System.out.println("Au revoir !");
@@ -76,7 +85,6 @@ public class Main {
             }
         }
     }
-
 
     public static Book addBook(Scanner s) {
         System.out.println("Quel est le nom du livre à ajouter ?");
@@ -122,13 +130,13 @@ public class Main {
         System.out.println("Quel livre souhaitez-vous emprunter ?");
         // créer une variable de sa réponse;
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
-
+        boolean bookFound = false; // Indicateur pour savoir si le livre a été trouvé et emprunté
 
         for (Book book : library.getBooks()) {
             String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
             if (normalizedTitle.equalsIgnoreCase(answer)) {
                 // Vérifier que le livre n'est pas déjà emprunté
-                    if (!book.isBorrowed()) {
+                if (!book.isBorrowed()) {
                     System.out.println("Voulez-vous emprunter " + book.getTitle() + " ? (oui/non)");
                     String confirmation = s.nextLine();
                     if (confirmation.equalsIgnoreCase("oui")) {
@@ -137,30 +145,67 @@ public class Main {
                         return book;  // Retourner le livre emprunté
                     } else {
                         System.out.println("Emprunt annulé.");
-                        return null;  // L'utilisateur a annulé l'emprunt
-                    }
+                        bookFound = true; // Indiquer que l'opération a été annulée
+                        break;
+                        }
                 } else {
-                    System.out.println("Désolé, ce livre est déjà emprunté.");
-                    return null;  // Le livre est déjà emprunté
+                    // Le livre est emprunté, continuez à chercher d'autres exemplaires
+                    System.out.println(book.getTitle() + " est déjà emprunté. Recherche d'un autre exemplaire...");
                 }
             }
+
         }
+        if (!bookFound) {
+            System.out.println("Aucun exemplaire disponible de " + answer + " n'a été trouvé.");
+        }
+
         System.out.println("Livre non trouvé dans la bibliothèque.");
         return null;  // Aucun livre correspondant n'a été trouvé
     }
-    public static class StringUtils {
-        public static String removeAccents(String text) {
-            String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-            Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-            return pattern.matcher(normalized).replaceAll("");
+
+    public static Book returnBook(Scanner s, Library library) {
+
+        System.out.println("Quel livre souhaitez-vous rendre ?");
+        // créer une variable de sa réponse;
+        String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
+        boolean bookFound = false; // Indicateur pour savoir si le livre a été trouvé et emprunté
+
+        for (Book book : library.getBooks()) {
+            String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
+            if (normalizedTitle.equalsIgnoreCase(answer)) {
+                // Vérifier que le livre n'est pas déjà disponible
+                if (book.isBorrowed()) {
+                    System.out.println("Voulez-vous rendre " + book.getTitle() + " ? (oui/non)");
+                    String confirmation = s.nextLine();
+                    if (confirmation.equalsIgnoreCase("oui")) {
+                        book.setBorrowed(false);  // Marquer le livre comme disponible
+                        System.out.println("Vous avez rendu " + book.getTitle() + ".");
+                        return book;  // Retourner le livre emprunté
+                    } else {
+                        System.out.println("Retour annulé.");
+                        bookFound = true; // Indiquer que l'opération a été annulée
+                        break;
+                    }
+                } else {
+                    // Le livre est emprunté, continuez à chercher d'autres exemplaires
+                    System.out.println(book.getTitle() + " est déjà disponible. Recherche d'un autre exemplaire emprunté...");
+                }
+            }
+
         }
+        if (!bookFound) {
+            System.out.println("Aucun exemplaire emprunté de " + answer + " n'a été trouvé.");
+        }
+
+        System.out.println("Livre non trouvé dans la bibliothèque.");
+        return null;  // Aucun livre correspondant n'a été trouvé
     }
+
 
     public static void main(String[] args) {
         Scanner s = new Scanner(System.in);
         Library library = new Library();  // Créer une instance de la bibliothèque
         menu(s, library);
-
 
 
         s.close();
