@@ -64,15 +64,14 @@ public class Main {
                         break;
                     case 3:
                         // Logique de recherche d'un livre par titre (à implémenter)
-
-                        menu(s, library);
+                        searchBook(s, library);
                         break;
                     case 4:
-                        // Logique d'emprunt d'un livre (à implémenter)
+                        // Logique d'emprunt d'un livre
                         borrowBook(s, library);
                         break;
                     case 5:
-                        // Logique de retour d'un livre (à implémenter)
+                        // Logique de retour d'un livre
                         returnBook(s, library);
                         break;
                     case 6:
@@ -191,7 +190,6 @@ public class Main {
                     System.out.println(book.getTitle() + " est déjà disponible. Recherche d'un autre exemplaire emprunté...");
                 }
             }
-
         }
         if (!bookFound) {
             System.out.println("Aucun exemplaire emprunté de " + answer + " n'a été trouvé.");
@@ -199,6 +197,26 @@ public class Main {
 
         System.out.println("Livre non trouvé dans la bibliothèque.");
         return null;  // Aucun livre correspondant n'a été trouvé
+    }
+
+    public static void searchBook (Scanner s, Library library) {
+        System.out.println("Quel livre cherchez-vous ?");
+        String answer = s.nextLine();
+        boolean bookFound = false;
+
+        for (Book book : library.getBooks()) {
+            String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
+            if (normalizedTitle.equalsIgnoreCase(answer)) {
+                System.out.println("Le livre : " + book.getTitle() +
+                        " a été écrit par " + book.getAuthor() +
+                        " et comprend " + book.getPageNumber() + " pages." +
+                        " Il est " + book.getBorrowedStatus());
+                bookFound = true;
+            }
+        }
+        if (!bookFound) {
+            System.out.println("Le livre " + answer + "n'a pas été trouvé");
+        }
     }
 
 
