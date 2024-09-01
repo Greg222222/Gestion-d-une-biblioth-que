@@ -1,3 +1,4 @@
+import fr.greg.*;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 import java.text.Normalizer;
@@ -127,7 +128,7 @@ public class Main {
     public static Book borrowBook(Scanner s, Library library) {
 
         System.out.println("Quel livre souhaitez-vous emprunter ?");
-        // créer une variable de sa réponse;
+        // créer une variable de sa réponse
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
         boolean bookFound = false; // Indicateur pour savoir si le livre a été trouvé et emprunté
 
@@ -165,7 +166,7 @@ public class Main {
     public static Book returnBook(Scanner s, Library library) {
 
         System.out.println("Quel livre souhaitez-vous rendre ?");
-        // créer une variable de sa réponse;
+        // créer une variable de sa réponse
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
         boolean bookFound = false; // Indicateur pour savoir si le livre a été trouvé et emprunté
 
