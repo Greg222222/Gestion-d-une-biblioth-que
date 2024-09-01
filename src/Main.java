@@ -148,6 +148,7 @@ public class Main {
                     if (confirmation.equalsIgnoreCase("oui")) {
                         book.setBorrowed(true);  // Marquer le livre comme emprunté
                         System.out.println("Vous avez emprunté " + book.getTitle() + ".");
+                        break;
                     } else {
                         System.out.println("Emprunt annulé.");
                         bookFound = true; // Indiquer que l'opération a été annulée
@@ -204,16 +205,31 @@ public class Main {
         System.out.println("Quel livre cherchez-vous ?");
         String answer = s.nextLine();
         boolean bookFound = false;
+        int totalFound = 0;
+        int totalAvailable = 0;
+        String lastBookTitle = "";
+        String lastBookAuthor = "";
+        int lastBookPages = 0;
 
         for (Book book : library.getBooks()) {
             String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
             if (normalizedTitle.equalsIgnoreCase(answer)) {
-                System.out.println("Le livre : " + book.getTitle() +
-                        " a été écrit par " + book.getAuthor() +
-                        " et comprend " + book.getPageNumber() + " pages." +
-                        " Il est " + book.getBorrowedStatus());
+                totalFound++;
+                if (!book.isBorrowed()) {
+                    totalAvailable++;
+                }
                 bookFound = true;
             }
+            lastBookTitle = book.getTitle();
+            lastBookAuthor = book.getAuthor();
+            lastBookPages = book.getPageNumber();
+        }
+        if (totalFound > 0) {
+            System.out.println(
+                 lastBookTitle + " a été écrit par " + lastBookAuthor +
+                 " et comprend " + lastBookPages + " pages. " +
+                 "Il en existe " + totalFound + " exemplaires dont "+
+                 totalAvailable + " de disponible(s).");
         }
         if (!bookFound) {
             System.out.println("Le livre " + answer + "n'a pas été trouvé");
