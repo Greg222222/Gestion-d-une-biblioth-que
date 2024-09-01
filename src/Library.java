@@ -26,4 +26,8 @@ public class Library {
     public int getNumberOfBooks() {
         return books.size();
     }
+
+    public ArrayList<Book> getBooks() {
+        return books;
+    }
 }
