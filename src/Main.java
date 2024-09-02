@@ -219,7 +219,8 @@ public class Main {
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
 
         Map<String, Integer> authorsCountMap = new HashMap<>();  // Map pour stocker le nombre d'exemplaires par auteur
-        Map<String, Book> firstUnvailableBookMap = new HashMap<>();  // Map pour stocker le premier exemplaire emprunté par auteur
+        Map<String, Integer> unavailableCountMap = new HashMap<>(); // Map pour stocker le nombre d'exemplaires disponibles par auteur
+        Map<String, Book> firstUnavailableBookMap = new HashMap<>();  // Map pour stocker le premier exemplaire non emprunté par auteur
         for (Book book : library.getBooks()) {
             String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
             if (normalizedTitle.equalsIgnoreCase(answer)) {
@@ -227,8 +228,11 @@ public class Main {
                 // Compter les exemplaires par auteur (par défaut clef : author, valeur = 0) et si on trouve, on incrémente de 1.
                 authorsCountMap.put(author, authorsCountMap.getOrDefault(author, 0) + 1);
                 // Stocker le premier exemplaire non emprunté par auteur
-                if (!book.isBorrowed() && !firstUnvailableBookMap.containsKey(author)) {
-                    firstUnvailableBookMap.put(author, book);
+                if (book.isBorrowed()) {
+                    unavailableCountMap.put(author, unavailableCountMap.getOrDefault(author, 0) + 1);
+                    if (!firstUnavailableBookMap.containsKey(author)) {
+                        firstUnavailableBookMap.put(author, book);
+                    }
                 }
             }
         }
@@ -247,8 +251,8 @@ public class Main {
             for (Map.Entry<String, Integer> entry : authorsCountMap.entrySet()) {
                 String author = entry.getKey();
                 int count = authorsCountMap.get(author);
-                int unavailableCount = entry.getValue();
-                System.out.println(index + " : " + author + " (Il existe " + count + " exemplaire(s) dont " + unavailableCount + " de disponible(s))");
+                int unavailableCount = unavailableCountMap.getOrDefault(author, 0);
+                System.out.println(index + " : " + author + " (Il existe " + count + " exemplaire(s) dont " + unavailableCount + " d'emprunté(s))");
                 index++;
             }
             int choice = -1;
@@ -257,17 +261,18 @@ public class Main {
                 try {
                     choice = s.nextInt();
                     s.nextLine();
-                } catch (InputMismatchException e) {
+                }
+                catch (InputMismatchException e) {
                     System.out.println("Veuillez entrer un nombre valide");
                     s.next();
                 }
-            }
-            String selectedAuthor = authors.get(choice - 1);
-            selectedBook = firstUnvailableBookMap.get(selectedAuthor);
-        } else {
-            // Si un seul auteur ou plusieurs exemplaires du même auteur, prendre le premier emprunté
+            }String selectedAuthor = authors.get(choice - 1);
+            selectedBook = firstUnavailableBookMap.get(selectedAuthor);
+        }
+        else {
+            // Si un seul auteur ou plusieurs exemplaires du même auteur, prendre le premier non emprunté
             String author = authorsCountMap.keySet().iterator().next();
-            selectedBook = firstUnvailableBookMap.get(author);
+            selectedBook = firstUnavailableBookMap.get(author);
             System.out.println("Il existe " + authorsCountMap.get(author) + " exemplaire(s) de " + author + ".");
         }
 
@@ -281,8 +286,8 @@ public class Main {
         System.out.println("Voulez-vous rendre " + selectedBook.getTitle() + " de " + selectedBook.getAuthor() + " ? (oui/non)");
         String confirmation = s.nextLine();
         if (confirmation.equalsIgnoreCase("oui")) {
-            selectedBook.setBorrowed(false);
-            System.out.println("Vous avez bien rendu " + selectedBook.getTitle() + " de " + selectedBook.getAuthor() + ".");
+            selectedBook.setBorrowed(false);  // Marquer le livre comme emprunté
+            System.out.println("Vous avez rendu " + selectedBook.getTitle() + " de " + selectedBook.getAuthor() + ".");
         } else {
             System.out.println("Retour annulé.");
         }
