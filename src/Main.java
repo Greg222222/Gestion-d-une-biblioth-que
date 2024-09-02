@@ -1,6 +1,6 @@
 import fr.greg.*;
-import java.util.InputMismatchException;
-import java.util.Scanner;
+
+import java.util.*;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -136,36 +136,78 @@ public class Main {
         System.out.println("Quel livre souhaitez-vous emprunter ?");
         // créer une variable de sa réponse
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
-        boolean bookFound = false; // Indicateur pour savoir si le livre a été trouvé et emprunté
 
+        Map<String, Integer> authorsCountMap = new HashMap<>();  // Map pour stocker le nombre d'exemplaires par auteur
+        Map<String, Book> firstAvailableBookMap = new HashMap<>();  // Map pour stocker le premier exemplaire non emprunté par auteur
         for (Book book : library.getBooks()) {
             String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
             if (normalizedTitle.equalsIgnoreCase(answer)) {
-                // Vérifier que le livre n'est pas déjà emprunté
-                if (!book.isBorrowed()) {
-                    System.out.println("Voulez-vous emprunter " + book.getTitle() + " ? (oui/non)");
-                    String confirmation = s.nextLine();
-                    if (confirmation.equalsIgnoreCase("oui")) {
-                        book.setBorrowed(true);  // Marquer le livre comme emprunté
-                        System.out.println("Vous avez emprunté " + book.getTitle() + ".");
-                        break;
-                    } else {
-                        System.out.println("Emprunt annulé.");
-                        bookFound = true; // Indiquer que l'opération a été annulée
-                        break;
-                        }
-                } else {
-                    // Le livre est emprunté, continuez à chercher d'autres exemplaires
-                    System.out.println(book.getTitle() + " est déjà emprunté. Recherche d'un autre exemplaire...");
+                String author = book.getAuthor();
+                // Compter les exemplaires par auteur (par défaut clef : author, valeur = 0) et si on trouve, on incrémente de 1.
+                authorsCountMap.put(author, authorsCountMap.getOrDefault(author, 0) +1);
+                // Stocker le premier exemplaire non emprunté par auteur
+                if (!book.isBorrowed() && !firstAvailableBookMap.containsKey(author)) {
+                    firstAvailableBookMap.put(author, book);
                 }
             }
 
         }
-        if (!bookFound) {
+
+        if (authorsCountMap.isEmpty()) {
             System.out.println("Aucun exemplaire disponible de " + answer + " n'a été trouvé.");
         }
 
-        System.out.println("Livre non trouvé dans la bibliothèque.");
+        Book selectedBook = null;
+
+        if (authorsCountMap.size() > 1) {
+            System.out.println("Plusieurs auteurs ont écrit un livre avec ce titre. Veuillez choisir un auteur :");
+            int index = 1;
+            List<String> authors = new ArrayList<>(authorsCountMap.keySet());
+
+                for (Map.Entry<String, Integer> entry : authorsCountMap.entrySet()) {
+                    Integer currentValue = entry.getValue(); // "Valeur en cours"
+                    String author = entry.getKey();
+                    int count = authorsCountMap.get(author);
+                    int availableCount = entry.getValue();
+                    System.out.println(index + " : " + author + " (Il existe " + count + " exemplaire(s) dont " + availableCount + " de disponible(s))");
+                    index++;
+                }
+            int choice = -1;
+            while (choice < 1 || choice > authors.size()) {
+                System.out.println("Entrez le numéro correspondant à l'auteur que vous voulez choisir");
+                try {
+                    choice = s.nextInt();
+                    s.nextLine();
+                }
+                catch (InputMismatchException e) {
+                    System.out.println("Veuillez entrer un nombre valide");
+                    s.next();
+                }
+            }String selectedAuthor = authors.get(choice - 1);
+            selectedBook = firstAvailableBookMap.get(selectedAuthor);
+        }
+        else {
+            // Si un seul auteur ou plusieurs exemplaires du même auteur, prendre le premier non emprunté
+            String author = authorsCountMap.keySet().iterator().next();
+            selectedBook = firstAvailableBookMap.get(author);
+            System.out.println("Il existe " + authorsCountMap.get(author) + " exemplaire(s) de " + author + ".");
+        }
+
+        // Si aucun exemplaire disponible n'a été trouvé
+        if (selectedBook == null) {
+            System.out.println("Tous les exemplaires de " + answer + " sont actuellement empruntés.");
+            return;
+        }
+
+        // Vérifier que le livre sélectionné n'est pas déjà emprunté
+        System.out.println("Voulez-vous emprunter " + selectedBook.getTitle() + " de " + selectedBook.getAuthor() + " ? (oui/non)");
+        String confirmation = s.nextLine();
+        if (confirmation.equalsIgnoreCase("oui")) {
+            selectedBook.setBorrowed(true);  // Marquer le livre comme emprunté
+            System.out.println("Vous avez emprunté " + selectedBook.getTitle() + " de " + selectedBook.getAuthor() + ".");
+        } else {
+            System.out.println("Emprunt annulé.");
+        }
     }
 
     public static void returnBook(Scanner s, Library library) {
@@ -211,6 +253,7 @@ public class Main {
         String lastBookAuthor = "";
         int lastBookPages = 0;
 
+
         for (Book book : library.getBooks()) {
             String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
             if (normalizedTitle.equalsIgnoreCase(answer)) {
@@ -223,17 +266,17 @@ public class Main {
             lastBookTitle = book.getTitle();
             lastBookAuthor = book.getAuthor();
             lastBookPages = book.getPageNumber();
-        }
+        }  // Cherche les livres ; incrémente totalFound() et totalAvailable()
         if (totalFound > 0) {
             System.out.println(
                  lastBookTitle + " a été écrit par " + lastBookAuthor +
                  " et comprend " + lastBookPages + " pages. " +
                  "Il en existe " + totalFound + " exemplaires dont "+
                  totalAvailable + " de disponible(s).");
-        }
+        } // Donne les infos
         if (!bookFound) {
             System.out.println("Le livre " + answer + "n'a pas été trouvé");
-        }
+        } // Pas trouvé
     }
 
     public static void removeBook (Scanner s, Library library) {
