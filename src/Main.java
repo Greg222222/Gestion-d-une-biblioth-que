@@ -217,9 +217,11 @@ public class Main {
         Map<String, Integer> authorsCountMap = new HashMap<>();
         Map<String, Integer> unavailableCountMap = new HashMap<>();
         Map<String, Book> firstUnavailableBookMap = new HashMap<>();
+        Map<String, Integer> availableCountMap = new HashMap<>();
+        Map<String, Book> firstAvailableBookMap = new HashMap<>();
     }
 
-    public static BookCounts countBook(Scanner s, Library library) {
+    public static BookCounts countUnavailableBook(Scanner s, Library library) {
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
         BookCounts counts = new BookCounts();
         Map<String, Integer> authorsCountMap = new HashMap<>();  // Map pour stocker le nombre d'exemplaires par auteur
@@ -246,12 +248,52 @@ public class Main {
         return counts;
     }
 
+    public static BookCounts countAvailableBook(String answer, Library library) {
+        BookCounts counts = new BookCounts();
+        // Initialisation des variables
+        Map<String, Integer> authorsCountMap = new HashMap<>();
+        Map<String, Integer> availableCountMap = new HashMap<>();
+        Map<String, Book> firstAvailableBookMap = new HashMap<>();
+
+        // Parcourir tous les livres de la bibliothèque
+        for (Book book : library.getBooks()) {
+            String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
+            if (normalizedTitle.contains(answer)) {
+                String author = book.getAuthor();
+
+                // Mettre à jour le nombre total de livres par auteur
+                authorsCountMap.put(author, authorsCountMap.getOrDefault(author, 0) + 1);
+
+                // Mettre à jour le nombre de livres disponibles par auteur
+                if (!book.isBorrowed()) {
+                    availableCountMap.put(author, availableCountMap.getOrDefault(author, 0) + 1);
+                    if (!firstAvailableBookMap.containsKey(author)) {
+                        firstAvailableBookMap.put(author, book);
+                    }
+                }
+            }
+        }
+        if (authorsCountMap.isEmpty()) {
+            System.out.println("Aucun exemplaire de " + answer + " n'a été trouvé.");
+        }
+        // Affichage pour debug
+        System.out.println("Debug: authorsCountMap = " + authorsCountMap);
+        System.out.println("Debug: availableCountMap = " + availableCountMap);
+        System.out.println("Debug: firstAvailableBookMap = " + firstAvailableBookMap);
+
+        // Assigner les maps à l'objet counts
+        counts.authorsCountMap = authorsCountMap;
+        counts.availableCountMap = availableCountMap;
+        counts.firstAvailableBookMap = firstAvailableBookMap;
+        return counts;
+    }
+
     public static void returnBook(Scanner s, Library library) {
 
         System.out.println("Quel livre souhaitez-vous rendre ?");
         // créer une variable de sa réponse
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
-        BookCounts counts = countBook(s, library);
+        BookCounts counts = countUnavailableBook(s, library);
 
         Book selectedBook = null;
 
@@ -308,45 +350,22 @@ public class Main {
 
     public static void searchBook(Scanner s, Library library) {
         System.out.println("Quel livre cherchez-vous ?");
+
         String answer = StringUtils.removeAccents(s.nextLine().toLowerCase());
-
-        // Initialisation des variables
-        Map<String, Integer> authorsCountMap = new HashMap<>();
-        Map<String, Integer> unavailableCountMap = new HashMap<>();
-        Map<String, Book> firstUnavailableBookMap = new HashMap<>();
-
-        // Parcourir tous les livres de la bibliothèque
-        for (Book book : library.getBooks()) {
-            String normalizedTitle = StringUtils.removeAccents(book.getTitle().toLowerCase());
-            if (normalizedTitle.contains(answer)) {
-                String author = book.getAuthor();
-
-                // Mettre à jour le nombre total de livres par auteur
-                authorsCountMap.put(author, authorsCountMap.getOrDefault(author, 0) + 1);
-
-                // Mettre à jour le nombre de livres empruntés par auteur
-                    unavailableCountMap.put(author, unavailableCountMap.getOrDefault(author, 0) + 1);
-                    if (!firstUnavailableBookMap.containsKey(author)) {
-                        firstUnavailableBookMap.put(author, book);
-                    }
-
-            }
-        }
-
-        // Vérifier si des livres ont été trouvés
-        if (authorsCountMap.isEmpty()) {
-            System.out.println("Aucun exemplaire de " + answer + " n'a été trouvé.");
-            return;
-        }
+        BookCounts counts = countAvailableBook(answer, library);
 
         Book selectedBook = null;
-        if (authorsCountMap.size() > 1) {
+        String selectedAuthor ="";
+        if (counts.authorsCountMap.size() > 1) {
             System.out.println("Plusieurs auteurs ont écrit un livre avec ce titre. Veuillez choisir un auteur :");
-            List<String> authors = new ArrayList<>(authorsCountMap.keySet());
+            List<String> authors = new ArrayList<>(counts.authorsCountMap.keySet());
 
             int choice = -1;
             while (choice < 1 || choice > authors.size()) {
                 System.out.println("Entrez le numéro correspondant à l'auteur que vous voulez choisir :");
+                for (int i = 0; i < authors.size(); i++) {
+                    System.out.println((i + 1) + ". " + authors.get(i));
+                }
                 try {
                     choice = s.nextInt();
                     s.nextLine(); // Pour nettoyer le buffer
@@ -356,23 +375,20 @@ public class Main {
                 }
             }
 
-            String selectedAuthor = authors.get(choice - 1);
-            selectedBook = firstUnavailableBookMap.get(selectedAuthor);
-        } else {
-            // Si un seul auteur a écrit ce livre
-            String author = authorsCountMap.keySet().iterator().next();
-            selectedBook = firstUnavailableBookMap.get(author);
+            selectedAuthor = authors.get(choice - 1);
         }
-
-        // Si aucun exemplaire disponible n'a été trouvé
+        // Récupération du livre correspondant à l'auteur sélectionné
+        selectedBook = counts.firstAvailableBookMap.get(selectedAuthor);
+        // Si aucun exemplaire n'a été trouvé
         if (selectedBook == null) {
-            System.out.println("Aucun exemplaire de " + answer + " n'est actuellement emprunté.");
-        } else {
+            System.out.println("Aucun exemplaire de " + answer + " n'a été trouvé.");
+        }
+        else {
             System.out.println(
                     selectedBook.getTitle() + " a été écrit par " + selectedBook.getAuthor() +
                             " et comprend " + selectedBook.getPageNumber() + " pages. " +
-                            "Il en existe " + authorsCountMap.get(selectedBook.getAuthor()) + " exemplaire(s), dont " +
-                            (authorsCountMap.get(selectedBook.getAuthor()) - unavailableCountMap.getOrDefault(selectedBook.getAuthor(), 0)) + " d'emprunté(s).");
+                            "Il en existe " + counts.authorsCountMap.get(selectedBook.getAuthor()) + " exemplaire(s), dont " +
+                            counts.availableCountMap.get(selectedBook.getAuthor()) + " de disponible(s).");
         }
     }
 
