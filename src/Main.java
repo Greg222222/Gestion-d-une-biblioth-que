@@ -158,6 +158,7 @@ public class Main {
 
         if (authorsCountMap.isEmpty()) {
             System.out.println("Aucun exemplaire disponible de " + answer + " n'a été trouvé.");
+            return;
         }
 
         Book selectedBook = null;
@@ -239,6 +240,7 @@ public class Main {
 
         if (authorsCountMap.isEmpty()) {
             System.out.println("Aucun exemplaire de " + answer + " n'a été trouvé.");
+            return;
         }
 
         Book selectedBook = null;
