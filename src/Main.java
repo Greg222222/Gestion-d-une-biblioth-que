@@ -308,7 +308,7 @@ public class Main {
                     System.out.println("Retour annulé.");
                 }
             } else {
-                System.out.println("Aucun livre correspondant à " + answer + " n'a été trouvé.");
+                System.out.println("Aucun livre emprunté correspondant à " + answer + " n'a été trouvé.");
             }
         }
         else if (authors.size() == 1) {
@@ -385,17 +385,20 @@ public class Main {
 
         Book selectedBook = null;
         String selectedAuthor = "null";
+
         if (counts.authorsCountMap.size() > 1) {
             System.out.println("Plusieurs auteurs ont écrit un livre avec ce titre. Veuillez choisir un auteur :");
             List<String> authors = new ArrayList<>(counts.authorsCountMap.keySet());
-
+            int index = 1;
             int choice = -1;
             while (choice < 1 || choice > authors.size()) {
-                System.out.println("Entrez le numéro correspondant à l'auteur que vous voulez choisir :");
-                for (int i = 0; i < authors.size(); i++) {
-                    System.out.println((i + 1) + ". " + authors.get(i));
+                for (String author : authors) {
+                    int count = counts.authorsCountMap.get(author);
+                    System.out.println(index + " : " + author + " (Il existe " + count + " exemplaire(s))");
+                    index++;
                 }
                 try {
+                    System.out.println("Entrez le numéro correspondant à l'auteur que vous voulez choisir :");
                     choice = s.nextInt();
                     s.nextLine(); // Pour nettoyer le buffer
                 } catch (InputMismatchException e) {
@@ -403,17 +406,23 @@ public class Main {
                     s.next(); // Pour nettoyer l'entrée incorrecte
                 }
             }
-
             selectedAuthor = authors.get(choice - 1);
+            selectedBook = counts.firstAvailableBookMap.get(selectedAuthor);
         }
         // Récupération du livre correspondant à l'auteur sélectionné
-        selectedBook = counts.firstAvailableBookMap.get(selectedAuthor);
-        // Si aucun exemplaire n'a été trouvé
-        if (selectedBook == null) {
-            System.out.println("Aucun exemplaire de " + answer + " n'a été trouvé.");
+        else if (counts.authorsCountMap.size() == 1) {
+            // Un seul auteur trouvé, on sélectionne directement
+            selectedAuthor = counts.authorsCountMap.keySet().iterator().next();
+            selectedBook = counts.firstAvailableBookMap.get(selectedAuthor);
         }
         else {
-            // Suppression du livre de la bibliothèque
+            // Aucun livre trouvé
+            System.out.println("Aucun exemplaire trouvé.");
+            return;
+        }
+
+        // Vérification et suppression du livre sélectionné
+        if (selectedBook != null) {
             boolean removed = library.getBooks().remove(selectedBook);
             if (removed) {
                 System.out.println(
@@ -423,8 +432,9 @@ public class Main {
             } else {
                 System.out.println("Erreur : Le livre n'a pas pu être supprimé.");
             }
+        } else {
+            System.out.println("Aucun livre correspondant à " + answer + " n'a été trouvé.");
         }
-
     }
 
 
